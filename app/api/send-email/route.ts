@@ -5,7 +5,7 @@ type Provider = { name: string; apiKey: string; priority: number };
 type QueuedEmail = { subject: string; body: string; subdomain: string; to: string[] };
 
 let providers: Provider[] = [
-  { name: 'Resend', apiKey: 're_xxxxxxxxxxxxxxxxxxxxxxxxxxxx', priority: 1 }, // Replace with your Resend API key
+  { name: 'Resend', apiKey: 're_8EeDKiH5_GF4wBA4eu1pWPMFY7X4mHt7q', priority: 1 }, // Replace with your Resend API key
 ];
 let emailQueue: QueuedEmail[] = [];
 
