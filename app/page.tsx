@@ -12,7 +12,7 @@ import NewsletterComposer from './components/NewsletterComposer';
 import EmailPreview from './components/EmailPreview';
 import SendButton from './components/SendButton';
 import { getPostsBySubdomain } from './lib/postStore';
-import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack } from '@chakra-ui/react';
+import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button } from '@chakra-ui/react';
 
 export default function Home({ params }: { params: { subdomain?: string } }) {
   const subdomain = params?.subdomain || 'testuser';
