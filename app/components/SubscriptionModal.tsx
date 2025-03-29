@@ -26,7 +26,7 @@ export default function SubscriptionModal({
   const toast = useToast();
 
   // Replace with your Paystack Test Public Key
-  const PAYSTACK_PUBLIC_KEY = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+  const PAYSTACK_PUBLIC_KEY = 'pk_test_5ebc0e092a7e842e99b3ed4d405554b875a99ae0';
   const { initializePayment } = usePaystack(PAYSTACK_PUBLIC_KEY);
 
   const handleSubscribe = () => {
