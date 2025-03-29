@@ -11,6 +11,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+import { usePaystack } from '../hooks/usePaystack';
 
 type SubscriptionModalProps = {
   subdomain: string;
@@ -24,19 +25,34 @@ export default function SubscriptionModal({
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
+  // Replace with your Paystack Test Public Key
+  const PAYSTACK_PUBLIC_KEY = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+  const { initializePayment } = usePaystack(PAYSTACK_PUBLIC_KEY);
+
   const handleSubscribe = () => {
-    // Simulate Paystack payment (replace with real integration later)
-    setTimeout(() => {
-      toast({
-        title: 'Subscription Successful',
-        description: `You’re now subscribed to ${subdomain}!`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      onSubscribeSuccess();
-      onClose();
-    }, 1000); // Simulate network delay
+    initializePayment({
+      email: `${subdomain}@example.com`, // Replace with real user email later
+      amount: 100000, // 1000 NGN (100,000 kobo) for testing
+      onSuccess: (response) => {
+        toast({
+          title: 'Subscription Successful',
+          description: `You’re now subscribed to ${subdomain}! Ref: ${response.reference}`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        onSubscribeSuccess();
+        onClose();
+      },
+      onClose: () => {
+        toast({
+          title: 'Payment Cancelled',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+      },
+    });
   };
 
   return (
@@ -51,7 +67,7 @@ export default function SubscriptionModal({
             Subscribe to {subdomain}
           </ModalHeader>
           <ModalBody>
-            Unlock all paid content for {subdomain} with a subscription.
+            Unlock all paid content for {subdomain} for 1000 NGN.
           </ModalBody>
           <ModalFooter>
             <Button variant="solid" onClick={handleSubscribe}>
