@@ -12,7 +12,7 @@ import NewsletterComposer from './components/NewsletterComposer';
 import EmailPreview from './components/EmailPreview';
 import SendButton from './components/SendButton';
 import { getPostsBySubdomain } from './lib/postStore';
-import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button } from '@chakra-ui/react';
+import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button, Input } from '@chakra-ui/react';
 
 export default function Home({ params }: { params: { subdomain?: string } }) {
   const subdomain = params?.subdomain || 'testuser';
@@ -20,6 +20,7 @@ export default function Home({ params }: { params: { subdomain?: string } }) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [newsletterSubject, setNewsletterSubject] = useState('');
   const [newsletterBody, setNewsletterBody] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState(''); // New state for recipient email
 
   const posts = getPostsBySubdomain(subdomain);
 
@@ -38,9 +39,14 @@ export default function Home({ params }: { params: { subdomain?: string } }) {
     );
   };
 
-  // Mock AI subject line generator
   const generateSubject = () => {
     setNewsletterSubject(`Latest from ${subdomain}: Your Weekly Update`);
+  };
+
+  const generateNewsletterContent = () => {
+    setNewsletterBody(
+      `Hello subscribers of ${subdomain}!\n\nThis is your latest newsletter, crafted with AI. Here’s what’s new: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Enjoy exclusive updates from ${subdomain}, and stay tuned for more!\n\nBest,\nThe ${subdomain} Team`
+    );
   };
 
   const handleSubscribeClick = () => {
@@ -78,6 +84,9 @@ export default function Home({ params }: { params: { subdomain?: string } }) {
               <Button onClick={generateSubject} variant="solid">
                 Generate Subject
               </Button>
+              <Button onClick={generateNewsletterContent} variant="solid">
+                Generate Content
+              </Button>
               <NewsletterComposer
                 subject={newsletterSubject}
                 setSubject={setNewsletterSubject}
@@ -85,10 +94,17 @@ export default function Home({ params }: { params: { subdomain?: string } }) {
                 setBody={setNewsletterBody}
               />
               <EmailPreview subject={newsletterSubject} body={newsletterBody} />
+              <Input
+                placeholder="Recipient Email (e.g., myemail@gmail.com)"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                borderColor="gray.200"
+              />
               <SendButton
                 subject={newsletterSubject}
                 body={newsletterBody}
                 subdomain={subdomain}
+                recipientEmail={recipientEmail}
               />
             </VStack>
           </TabPanel>
