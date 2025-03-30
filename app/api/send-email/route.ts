@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await resend.emails.send({
-      from: `news@${subdomain}.spawnwrite.com`,
+      from: `onboarding@resend.dev`,
+      // from: `news@${subdomain}.spawnwrite.com`,
       to,
       subject,
       text: body,

@@ -12,12 +12,10 @@ interface SubscriptionModalProps {
 export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: SubscriptionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Replace with your Paystack Test Public Key
-  const PAYSTACK_PUBLIC_KEY = 'pk_test_5ebc0e092a7e842e99b3ed4d405554b875a99ae0';
   const { initializePayment } = usePaystack({
     email: 'user@example.com', // Replace with real user email (e.g., from auth)
     amount: 1000, // Example amount in NGN (adjust as needed)
-    publicKey: PAYSTACK_PUBLIC_KEY,
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '', // Load from env
     onSuccess: () => {
       setIsOpen(false);
       onSubscribeSuccess();
@@ -28,6 +26,10 @@ export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: Sub
   });
 
   const handleSubscribe = () => {
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      console.error('Paystack public key is missing');
+      return;
+    }
     initializePayment();
   };
 
