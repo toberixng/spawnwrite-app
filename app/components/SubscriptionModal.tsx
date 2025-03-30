@@ -1,79 +1,53 @@
 'use client';
 
-import {
-  Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  useToast,
-} from '@chakra-ui/react';
+import { useState } from 'react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@chakra-ui/react';
 import { usePaystack } from '../hooks/usePaystack';
 
-type SubscriptionModalProps = {
+interface SubscriptionModalProps {
   subdomain: string;
   onSubscribeSuccess: () => void;
-};
+}
 
-export default function SubscriptionModal({
-  subdomain,
-  onSubscribeSuccess,
-}: SubscriptionModalProps) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const toast = useToast();
+export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: SubscriptionModalProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
   // Replace with your Paystack Test Public Key
   const PAYSTACK_PUBLIC_KEY = 'pk_test_5ebc0e092a7e842e99b3ed4d405554b875a99ae0';
-  const { initializePayment } = usePaystack(PAYSTACK_PUBLIC_KEY);
+  const { initializePayment } = usePaystack({
+    email: 'user@example.com', // Replace with real user email (e.g., from auth)
+    amount: 1000, // Example amount in NGN (adjust as needed)
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    onSuccess: () => {
+      setIsOpen(false);
+      onSubscribeSuccess();
+    },
+    onClose: () => {
+      setIsOpen(false);
+    },
+  });
 
   const handleSubscribe = () => {
-    initializePayment({
-      email: `${subdomain}@example.com`, // Replace with real user email later
-      amount: 100000, // 1000 NGN (100,000 kobo) for testing
-      onSuccess: (response) => {
-        toast({
-          title: 'Subscription Successful',
-          description: `You’re now subscribed to ${subdomain}! Ref: ${response.reference}`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-        onSubscribeSuccess();
-        onClose();
-      },
-      onClose: () => {
-        toast({
-          title: 'Payment Cancelled',
-          status: 'warning',
-          duration: 3000,
-          isClosable: true,
-        });
-      },
-    });
+    initializePayment();
   };
 
   return (
     <>
-      <Button onClick={onOpen} variant="solid" display="none" id="subscribe-btn">
+      <Button id="subscribe-btn" onClick={() => setIsOpen(true)} style={{ display: 'none' }}>
         Subscribe
       </Button>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader color="primary.500">
-            Subscribe to {subdomain}
-          </ModalHeader>
+          <ModalHeader>Subscribe to {subdomain}</ModalHeader>
           <ModalBody>
-            Unlock all paid content for {subdomain} for 1000 NGN.
+            <p>Unlock premium content for just ₦1000!</p>
           </ModalBody>
           <ModalFooter>
-            <Button variant="solid" onClick={handleSubscribe}>
+            <Button colorScheme="yellow" onClick={handleSubscribe}>
               Pay with Paystack
             </Button>
-            <Button ml={3} onClick={onClose}>
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
           </ModalFooter>
