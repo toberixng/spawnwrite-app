@@ -12,7 +12,24 @@ import PostCard from '../components/PostCard';
 import NewsletterComposer from '../components/NewsletterComposer';
 import EmailPreview from '../components/EmailPreview';
 import SendButton from '../components/SendButton';
-import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button, Input, Text, useToast } from '@chakra-ui/react';
+import {
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  VStack,
+  Button,
+  Input,
+  Text,
+  useToast,
+  Spinner,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Box,
+} from '@chakra-ui/react';
 
 export default function UserPage({ params }: { params: { username: string } }) {
   const username = params.username;
@@ -22,12 +39,17 @@ export default function UserPage({ params }: { params: { username: string } }) {
   const [newsletterBody, setNewsletterBody] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [posts, setPosts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // New: Loading state
+  const [error, setError] = useState<string | null>(null); // New: Error state
   const toast = useToast();
 
   // Fetch posts from the API route when the page loads
   useEffect(() => {
     const fetchPosts = async () => {
       try {
+        setIsLoading(true); // Start loading
+        setError(null); // Clear any previous errors
+
         const response = await fetch(`/api/posts?username=${username}`);
         const data = await response.json();
 
@@ -37,14 +59,17 @@ export default function UserPage({ params }: { params: { username: string } }) {
 
         setPosts(data.posts);
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        const errorMessage = (error as Error).message || 'Failed to fetch posts';
+        setError(errorMessage); // Set error state
         toast({
           title: 'Error',
-          description: 'Failed to fetch posts',
+          description: errorMessage,
           status: 'error',
-          duration: 3000,
+          duration: 5000,
           isClosable: true,
         });
+      } finally {
+        setIsLoading(false); // Stop loading
       }
     };
 
@@ -129,11 +154,31 @@ export default function UserPage({ params }: { params: { username: string } }) {
               />
               <Editor value={content} onChange={setContent} />
               <PublishButton content={content} subdomain={username} />
-              {posts.map((post) =>
-                post.is_paid && !isSubscribed ? (
-                  <PaywallBanner key={post.id} onSubscribe={handleSubscribeClick} />
-                ) : (
-                  <PostCard key={post.id} post={post} isSubscribed={isSubscribed} />
+              {/* New: Loading and Error States */}
+              {isLoading ? (
+                <Box textAlign="center" py={4}>
+                  <Spinner size="lg" color="yellow.500" />
+                  <Text mt={2}>Loading posts...</Text>
+                </Box>
+              ) : error ? (
+                <Alert status="error" borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Box>
+                </Alert>
+              ) : posts.length === 0 ? (
+                <Text textAlign="center" color="gray.500">
+                  No posts yet. Create your first post above!
+                </Text>
+              ) : (
+                posts.map((post) =>
+                  post.is_paid && !isSubscribed ? (
+                    <PaywallBanner key={post.id} onSubscribe={handleSubscribeClick} />
+                  ) : (
+                    <PostCard key={post.id} post={post} isSubscribed={isSubscribed} />
+                  )
                 )
               )}
             </VStack>

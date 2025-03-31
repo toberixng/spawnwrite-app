@@ -2,6 +2,7 @@
 'use client';
 
 import { Button, useToast } from '@chakra-ui/react';
+import { useState } from 'react';
 
 interface PublishButtonProps {
   content: string;
@@ -10,6 +11,7 @@ interface PublishButtonProps {
 
 export default function PublishButton({ content, subdomain }: PublishButtonProps) {
   const toast = useToast();
+  const [isPublishing, setIsPublishing] = useState(false); // New: Loading state
 
   const handlePublish = async () => {
     if (!content) {
@@ -24,6 +26,8 @@ export default function PublishButton({ content, subdomain }: PublishButtonProps
     }
 
     try {
+      setIsPublishing(true); // Start loading
+
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
@@ -60,11 +64,18 @@ export default function PublishButton({ content, subdomain }: PublishButtonProps
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setIsPublishing(false); // Stop loading
     }
   };
 
   return (
-    <Button onClick={handlePublish} colorScheme="green">
+    <Button
+      onClick={handlePublish}
+      colorScheme="green"
+      isLoading={isPublishing} // Show loading spinner on the button
+      loadingText="Publishing..." // Text during loading
+    >
       Publish
     </Button>
   );
