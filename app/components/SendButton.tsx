@@ -1,7 +1,9 @@
+// app/components/SendButton.tsx
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@chakra-ui/react';
+import mixpanel from '../lib/mixpanel';
 
 interface SendButtonProps {
   subject: string;
@@ -26,13 +28,11 @@ export default function SendButton({
   const [isSent, setIsSent] = useState(false);
 
   const handleSend = async () => {
-    if (isSending || isSent) return; // Prevent double-clicks
+    if (isSending || isSent) return;
+    if (onBeforeSend && !onBeforeSend()) return;
 
-    if (onBeforeSend && !onBeforeSend()) {
-      return;
-    }
-
-    setIsSending(true); // Show "Sending..."
+    setIsSending(true);
+    mixpanel.track('Send Newsletter Attempt', { subdomain, recipientEmail });
 
     try {
       const response = await fetch('/api/send-email', {
@@ -47,14 +47,18 @@ export default function SendButton({
         throw new Error(data.error || 'Failed to send email');
       }
 
-      setIsSending(false); // Done sending
-      setIsSent(true); // Show "Success"
+      setIsSending(false);
+      setIsSent(true);
+      mixpanel.track('Send Newsletter Success', { subdomain, recipientEmail });
       if (onSuccess) onSuccess();
-
-      // Reset to "Send Newsletter" after 2 seconds
       setTimeout(() => setIsSent(false), 2000);
     } catch (error) {
-      setIsSending(false); // Reset on error
+      setIsSending(false);
+      mixpanel.track('Send Newsletter Failed', {
+        subdomain,
+        recipientEmail,
+        error: (error as Error).message,
+      });
       if (onError) onError((error as Error).message);
     }
   };
@@ -66,8 +70,8 @@ export default function SendButton({
       w="fit-content"
       px={4}
       isDisabled={!subject || !body || !recipientEmail || isSending || isSent}
-      isLoading={isSending} // Chakra's loading spinner
-      loadingText="Sending..." // Text during send
+      isLoading={isSending}
+      loadingText="Sending..."
     >
       {isSent ? 'Success' : 'Send Newsletter'}
     </Button>

@@ -1,8 +1,10 @@
+// app/components/SubscriptionModal.tsx
 'use client';
 
 import { useState } from 'react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@chakra-ui/react';
 import { usePaystack } from '../hooks/usePaystack';
+import mixpanel from '../lib/mixpanel';
 
 interface SubscriptionModalProps {
   subdomain: string;
@@ -13,15 +15,17 @@ export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: Sub
   const [isOpen, setIsOpen] = useState(false);
 
   const { initializePayment } = usePaystack({
-    email: 'user@example.com', // Replace with real user email (e.g., from auth)
-    amount: 1000, // Example amount in NGN (adjust as needed)
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '', // Load from env
+    email: 'user@example.com', // Replace with real user email later
+    amount: 1000,
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
     onSuccess: () => {
       setIsOpen(false);
       onSubscribeSuccess();
+      mixpanel.track('Subscription Success', { subdomain });
     },
     onClose: () => {
       setIsOpen(false);
+      mixpanel.track('Subscription Closed', { subdomain });
     },
   });
 
@@ -30,12 +34,17 @@ export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: Sub
       console.error('Paystack public key is missing');
       return;
     }
+    mixpanel.track('Subscription Attempt', { subdomain });
     initializePayment();
   };
 
   return (
     <>
-      <Button id="subscribe-btn" onClick={() => setIsOpen(true)} style={{ display: 'none' }}>
+      <Button
+        id="subscribe-btn"
+        onClick={() => setIsOpen(true)}
+        style={{ display: 'none' }}
+      >
         Subscribe
       </Button>
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
