@@ -1,9 +1,9 @@
-// app/sitemap.tsx
+// app/sitemap.xml/route.tsx
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const baseUrl = 'https://spawnwrite.com';
-  const staticPages = ['', '/testuser']; // Add more user pages dynamically later if needed
+  const staticPages = ['', '/testuser']; // Add more user pages dynamically later
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
