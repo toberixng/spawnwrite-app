@@ -2,7 +2,6 @@
 'use client';
 
 import { Button, useToast } from '@chakra-ui/react';
-import { supabase } from '../lib/supabase';
 
 interface PublishButtonProps {
   content: string;
@@ -25,39 +24,22 @@ export default function PublishButton({ content, subdomain }: PublishButtonProps
     }
 
     try {
-      // Get or create the user
-      let { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', subdomain)
-        .single();
-
-      if (userError && userError.code !== 'PGRST116') {
-        throw new Error('Error fetching user: ' + userError.message);
-      }
-
-      if (!user) {
-        const { data: newUser, error: createError } = await supabase
-          .from('users')
-          .insert({ username: subdomain, email: `${subdomain}@example.com` })
-          .select('id')
-          .single();
-
-        if (createError) {
-          throw new Error('Error creating user: ' + createError.message);
-        }
-        user = newUser;
-      }
-
-      // Save the post to Supabase
-      const { error } = await supabase.from('posts').insert({
-        user_id: user.id,
-        content,
-        is_paid: false, // For now, all posts are free; we'll add paid logic later
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: subdomain,
+          content,
+          is_paid: false, // For now, all posts are free
+        }),
       });
 
-      if (error) {
-        throw new Error('Error publishing post: ' + error.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to publish post');
       }
 
       toast({

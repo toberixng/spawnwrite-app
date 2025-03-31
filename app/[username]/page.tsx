@@ -12,7 +12,6 @@ import PostCard from '../components/PostCard';
 import NewsletterComposer from '../components/NewsletterComposer';
 import EmailPreview from '../components/EmailPreview';
 import SendButton from '../components/SendButton';
-import { supabase } from '../lib/supabase';
 import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button, Input, Text, useToast } from '@chakra-ui/react';
 
 export default function UserPage({ params }: { params: { username: string } }) {
@@ -25,52 +24,32 @@ export default function UserPage({ params }: { params: { username: string } }) {
   const [posts, setPosts] = useState<any[]>([]);
   const toast = useToast();
 
-  // Fetch posts from Supabase when the page loads
+  // Fetch posts from the API route when the page loads
   useEffect(() => {
     const fetchPosts = async () => {
-      // First, get or create the user
-      let { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', username)
-        .single();
+      try {
+        const response = await fetch(`/api/posts?username=${username}`);
+        const data = await response.json();
 
-      if (userError && userError.code !== 'PGRST116') {
-        console.error('Error fetching user:', userError);
-        return;
-      }
-
-      if (!user) {
-        // If user doesn't exist, create one
-        const { data: newUser, error: createError } = await supabase
-          .from('users')
-          .insert({ username, email: `${username}@example.com` })
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('Error creating user:', createError);
-          return;
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch posts');
         }
-        user = newUser;
-      }
 
-      // Fetch posts for this user
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) {
+        setPosts(data.posts);
+      } catch (error) {
         console.error('Error fetching posts:', error);
-        return;
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch posts',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
       }
-
-      setPosts(data || []);
     };
 
     fetchPosts();
-  }, [username]);
+  }, [username, toast]);
 
   const generateHeadline = () => {
     setContent(`<h1>${username}'s Amazing Post</h1>` + content);
