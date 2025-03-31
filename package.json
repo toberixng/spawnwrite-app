@@ -14,7 +14,7 @@
     "@emotion/styled": "^11.11.5",
     "@types/quill": "^2.0.14",
     "framer-motion": "^11.0.28",
-    "next": "^14.2.11",
+    "next": "^14.2.26",
     "quill": "^2.0.2",
     "react": "^18",
     "react-dom": "^18",
