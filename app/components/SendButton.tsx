@@ -1,117 +1,75 @@
 'use client';
 
-import { Button, useToast, VStack } from '@chakra-ui/react';
 import { useState } from 'react';
+import { Button } from '@chakra-ui/react';
 
-type SendButtonProps = {
+interface SendButtonProps {
   subject: string;
   body: string;
   subdomain: string;
   recipientEmail: string;
-};
+  onBeforeSend?: () => boolean;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
 
 export default function SendButton({
   subject,
   body,
   subdomain,
   recipientEmail,
+  onBeforeSend,
+  onSuccess,
+  onError,
 }: SendButtonProps) {
-  const toast = useToast();
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
 
   const handleSend = async () => {
-    if (!recipientEmail) {
-      toast({
-        title: 'Recipient Missing',
-        description: 'Please enter a recipient email.',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
-      });
+    if (isSending || isSent) return; // Prevent double-clicks
+
+    if (onBeforeSend && !onBeforeSend()) {
       return;
     }
+
+    setIsSending(true); // Show "Sending..."
+
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, body, subdomain, to: [recipientEmail] }),
+        body: JSON.stringify({ subject, body, subdomain, to: recipientEmail }),
       });
 
-      const result = await response.json();
+      const data = await response.json();
+
       if (!response.ok) {
-        if (result.queued) {
-          toast({
-            title: 'Email Queued',
-            description: 'Email provider is down. Email queued for later delivery.',
-            status: 'warning',
-            duration: 3000,
-            isClosable: true,
-          });
-        } else {
-          throw new Error(result.error || 'Failed to send email');
-        }
-      } else {
-        console.log('Email sent successfully:', result);
-        toast({
-          title: 'Newsletter Sent',
-          description: 'Your newsletter has been delivered!',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
+        throw new Error(data.error || 'Failed to send email');
       }
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast({
-        title: 'Error Sending Newsletter',
-        description: 'Something went wrong. Check the console for details.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
 
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    try {
-      const response = await fetch('/api/send-email', { method: 'GET' });
-      const result = await response.json();
-      console.log('Retry results:', result);
-      toast({
-        title: 'Retry Attempted',
-        description: `Processed ${result.results.length} emails. ${result.remaining} remain queued.`,
-        status: result.remaining > 0 ? 'warning' : 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+      setIsSending(false); // Done sending
+      setIsSent(true); // Show "Success"
+      if (onSuccess) onSuccess();
+
+      // Reset to "Send Newsletter" after 2 seconds
+      setTimeout(() => setIsSent(false), 2000);
     } catch (error) {
-      console.error('Retry error:', error);
-      toast({
-        title: 'Retry Failed',
-        description: 'Could not retry queued emails.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsRetrying(false);
+      setIsSending(false); // Reset on error
+      if (onError) onError((error as Error).message);
     }
   };
 
   return (
-    <VStack spacing={2}>
-      <Button onClick={handleSend} variant="solid" isDisabled={isRetrying}>
-        Send Newsletter
-      </Button>
-      <Button
-        onClick={handleRetry}
-        variant="outline"
-        isLoading={isRetrying}
-        loadingText="Retrying..."
-      >
-        Retry Queued Emails
-      </Button>
-    </VStack>
+    <Button
+      onClick={handleSend}
+      colorScheme="yellow"
+      w="fit-content"
+      px={4}
+      isDisabled={!subject || !body || !recipientEmail || isSending || isSent}
+      isLoading={isSending} // Chakra's loading spinner
+      loadingText="Sending..." // Text during send
+    >
+      {isSent ? 'Success' : 'Send Newsletter'}
+    </Button>
   );
 }
