@@ -1,7 +1,7 @@
 // app/[username]/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SubdomainLayout from '../components/SubdomainLayout';
 import Editor from '../components/Editor';
 import AIContentToolbar from '../components/AIContentToolbar';
@@ -12,7 +12,7 @@ import PostCard from '../components/PostCard';
 import NewsletterComposer from '../components/NewsletterComposer';
 import EmailPreview from '../components/EmailPreview';
 import SendButton from '../components/SendButton';
-import { getPostsBySubdomain } from '../lib/postStore';
+import { supabase } from '../lib/supabase';
 import { Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Button, Input, Text, useToast } from '@chakra-ui/react';
 
 export default function UserPage({ params }: { params: { username: string } }) {
@@ -22,9 +22,55 @@ export default function UserPage({ params }: { params: { username: string } }) {
   const [newsletterSubject, setNewsletterSubject] = useState('');
   const [newsletterBody, setNewsletterBody] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [posts, setPosts] = useState<any[]>([]);
   const toast = useToast();
 
-  const posts = getPostsBySubdomain(username);
+  // Fetch posts from Supabase when the page loads
+  useEffect(() => {
+    const fetchPosts = async () => {
+      // First, get or create the user
+      let { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user:', userError);
+        return;
+      }
+
+      if (!user) {
+        // If user doesn't exist, create one
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({ username, email: `${username}@example.com` })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating user:', createError);
+          return;
+        }
+        user = newUser;
+      }
+
+      // Fetch posts for this user
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching posts:', error);
+        return;
+      }
+
+      setPosts(data || []);
+    };
+
+    fetchPosts();
+  }, [username]);
 
   const generateHeadline = () => {
     setContent(`<h1>${username}'s Amazing Post</h1>` + content);
@@ -105,7 +151,7 @@ export default function UserPage({ params }: { params: { username: string } }) {
               <Editor value={content} onChange={setContent} />
               <PublishButton content={content} subdomain={username} />
               {posts.map((post) =>
-                post.isPaid && !isSubscribed ? (
+                post.is_paid && !isSubscribed ? (
                   <PaywallBanner key={post.id} onSubscribe={handleSubscribeClick} />
                 ) : (
                   <PostCard key={post.id} post={post} isSubscribed={isSubscribed} />
@@ -180,8 +226,8 @@ export default function UserPage({ params }: { params: { username: string } }) {
               <Button
                 onClick={handleRetryQueuedEmails}
                 colorScheme="blue"
-                w="fit-content" // Shrink width to text
-                px={4} // Moderate padding
+                w="fit-content"
+                px={4}
                 isDisabled={!recipientEmail}
               >
                 Retry Queued Emails

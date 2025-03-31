@@ -1,47 +1,89 @@
+// app/components/PublishButton.tsx
 'use client';
 
-import { Button, Checkbox, Flex, useToast } from '@chakra-ui/react';
-import { useState } from 'react';
-import { addPost } from '../lib/postStore';
-import { Post } from '../lib/types';
+import { Button, useToast } from '@chakra-ui/react';
+import { supabase } from '../lib/supabase';
 
-type PublishButtonProps = {
+interface PublishButtonProps {
   content: string;
   subdomain: string;
-};
+}
 
 export default function PublishButton({ content, subdomain }: PublishButtonProps) {
-  const [isPaid, setIsPaid] = useState(false);
   const toast = useToast();
 
-  const handlePublish = () => {
-    const post: Post = {
-      id: Math.random().toString(36).substring(2), // Simple random ID
-      title: content.match(/<h1>(.*?)<\/h1>/)?.[1] || 'Untitled',
-      content,
-      isPaid,
-      subdomain,
-      publishedAt: new Date().toISOString(),
-    };
+  const handlePublish = async () => {
+    if (!content) {
+      toast({
+        title: 'Error',
+        description: 'Content cannot be empty',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
 
-    addPost(post);
-    toast({
-      title: 'Post Published',
-      description: `Your ${isPaid ? 'paid' : 'free'} post is live!`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    try {
+      // Get or create the user
+      let { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', subdomain)
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        throw new Error('Error fetching user: ' + userError.message);
+      }
+
+      if (!user) {
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({ username: subdomain, email: `${subdomain}@example.com` })
+          .select('id')
+          .single();
+
+        if (createError) {
+          throw new Error('Error creating user: ' + createError.message);
+        }
+        user = newUser;
+      }
+
+      // Save the post to Supabase
+      const { error } = await supabase.from('posts').insert({
+        user_id: user.id,
+        content,
+        is_paid: false, // For now, all posts are free; we'll add paid logic later
+      });
+
+      if (error) {
+        throw new Error('Error publishing post: ' + error.message);
+      }
+
+      toast({
+        title: 'Post Published',
+        description: 'Your post has been published successfully!',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Refresh the page to show the new post
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: (error as Error).message || 'Failed to publish post',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
-    <Flex gap={4} align="center">
-      <Checkbox isChecked={isPaid} onChange={(e) => setIsPaid(e.target.checked)}>
-        Paid Content
-      </Checkbox>
-      <Button onClick={handlePublish} variant="solid">
-        Publish
-      </Button>
-    </Flex>
+    <Button onClick={handlePublish} colorScheme="green">
+      Publish
+    </Button>
   );
 }
