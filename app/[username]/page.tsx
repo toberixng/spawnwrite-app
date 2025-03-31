@@ -29,6 +29,7 @@ import {
   AlertTitle,
   AlertDescription,
   Box,
+  Divider,
 } from '@chakra-ui/react';
 
 export default function UserPage({ params }: { params: { username: string } }) {
@@ -39,16 +40,16 @@ export default function UserPage({ params }: { params: { username: string } }) {
   const [newsletterBody, setNewsletterBody] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [posts, setPosts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // New: Loading state
-  const [error, setError] = useState<string | null>(null); // New: Error state
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
   // Fetch posts from the API route when the page loads
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        setIsLoading(true); // Start loading
-        setError(null); // Clear any previous errors
+        setIsLoading(true);
+        setError(null);
 
         const response = await fetch(`/api/posts?username=${username}`);
         const data = await response.json();
@@ -60,7 +61,7 @@ export default function UserPage({ params }: { params: { username: string } }) {
         setPosts(data.posts);
       } catch (error) {
         const errorMessage = (error as Error).message || 'Failed to fetch posts';
-        setError(errorMessage); // Set error state
+        setError(errorMessage);
         toast({
           title: 'Error',
           description: errorMessage,
@@ -69,7 +70,7 @@ export default function UserPage({ params }: { params: { username: string } }) {
           isClosable: true,
         });
       } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false);
       }
     };
 
@@ -139,26 +140,48 @@ export default function UserPage({ params }: { params: { username: string } }) {
 
   return (
     <SubdomainLayout subdomain={username}>
-      <Tabs variant="soft-rounded" colorScheme="yellow">
-        <TabList>
-          <Tab>Create Post</Tab>
-          <Tab>Newsletter</Tab>
+      <Tabs variant="soft-rounded" colorScheme="yellow" isFitted>
+        <TabList mb={6}>
+          <Tab
+            fontWeight="medium"
+            fontSize="lg"
+            _selected={{ bg: 'yellow.400', color: 'white', boxShadow: 'md' }}
+          >
+            Create Post
+          </Tab>
+          <Tab
+            fontWeight="medium"
+            fontSize="lg"
+            _selected={{ bg: 'yellow.400', color: 'white', boxShadow: 'md' }}
+          >
+            Newsletter
+          </Tab>
         </TabList>
         <TabPanels>
-          <TabPanel>
+          <TabPanel px={0}>
             <VStack spacing={6} align="stretch">
               <AIContentToolbar
                 onGenerateHeadline={generateHeadline}
                 onSummarize={summarize}
                 onGenerateContent={generateContent}
               />
-              <Editor value={content} onChange={setContent} />
+              <Box
+                border="1px solid"
+                borderColor="gray.200"
+                borderRadius="md"
+                p={4}
+                bg="gray.50"
+              >
+                <Editor value={content} onChange={setContent} />
+              </Box>
               <PublishButton content={content} subdomain={username} />
-              {/* New: Loading and Error States */}
+              <Divider />
               {isLoading ? (
                 <Box textAlign="center" py={4}>
                   <Spinner size="lg" color="yellow.500" />
-                  <Text mt={2}>Loading posts...</Text>
+                  <Text mt={2} color="gray.600">
+                    Loading posts...
+                  </Text>
                 </Box>
               ) : error ? (
                 <Alert status="error" borderRadius="md">
@@ -169,28 +192,45 @@ export default function UserPage({ params }: { params: { username: string } }) {
                   </Box>
                 </Alert>
               ) : posts.length === 0 ? (
-                <Text textAlign="center" color="gray.500">
+                <Text textAlign="center" color="gray.500" fontSize="lg">
                   No posts yet. Create your first post above!
                 </Text>
               ) : (
-                posts.map((post) =>
-                  post.is_paid && !isSubscribed ? (
-                    <PaywallBanner key={post.id} onSubscribe={handleSubscribeClick} />
-                  ) : (
-                    <PostCard key={post.id} post={post} isSubscribed={isSubscribed} />
-                  )
-                )
+                <VStack spacing={4} align="stretch">
+                  {posts.map((post) =>
+                    post.is_paid && !isSubscribed ? (
+                      <PaywallBanner key={post.id} onSubscribe={handleSubscribeClick} />
+                    ) : (
+                      <PostCard key={post.id} post={post} isSubscribed={isSubscribed} />
+                    )
+                  )}
+                </VStack>
               )}
             </VStack>
           </TabPanel>
-          <TabPanel>
+          <TabPanel px={0}>
             <VStack spacing={6} align="stretch">
-              <Button onClick={generateSubject} variant="solid" size="lg">
-                Generate Subject
-              </Button>
-              <Button onClick={generateNewsletterContent} variant="solid" size="lg">
-                Generate Content
-              </Button>
+              <Box>
+                <Button
+                  onClick={generateSubject}
+                  variant="solid"
+                  colorScheme="yellow"
+                  size="lg"
+                  w="full"
+                  mb={3}
+                >
+                  Generate Subject
+                </Button>
+                <Button
+                  onClick={generateNewsletterContent}
+                  variant="solid"
+                  colorScheme="yellow"
+                  size="lg"
+                  w="full"
+                >
+                  Generate Content
+                </Button>
+              </Box>
               <NewsletterComposer
                 subject={newsletterSubject}
                 setSubject={setNewsletterSubject}
@@ -203,6 +243,8 @@ export default function UserPage({ params }: { params: { username: string } }) {
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 borderColor="gray.200"
+                size="lg"
+                borderRadius="md"
               />
               {!isValidEmail(recipientEmail) && recipientEmail.length > 0 && (
                 <Text color="red.500" fontSize="sm">
@@ -250,8 +292,8 @@ export default function UserPage({ params }: { params: { username: string } }) {
               <Button
                 onClick={handleRetryQueuedEmails}
                 colorScheme="blue"
-                w="fit-content"
-                px={4}
+                w="full"
+                size="lg"
                 isDisabled={!recipientEmail}
               >
                 Retry Queued Emails
