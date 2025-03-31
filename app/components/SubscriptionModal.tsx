@@ -14,10 +14,16 @@ interface SubscriptionModalProps {
 export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: SubscriptionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_fallback_key_for_debugging';
+
+  // Debug: Log the key and environment details
+  console.log('Environment:', process.env);
+  console.log('Paystack Key in SubscriptionModal:', paystackKey);
+
   const { initializePayment } = usePaystack({
     email: 'user@example.com', // Replace with real user email later
     amount: 1000,
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+    publicKey: paystackKey,
     onSuccess: () => {
       setIsOpen(false);
       onSubscribeSuccess();
@@ -30,8 +36,8 @@ export default function SubscriptionModal({ subdomain, onSubscribeSuccess }: Sub
   });
 
   const handleSubscribe = () => {
-    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-      console.error('Paystack public key is missing');
+    if (!paystackKey || paystackKey === 'pk_test_fallback_key_for_debugging') {
+      console.error('Paystack public key is missing or using fallback. Check NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY in environment variables.');
       return;
     }
     mixpanel.track('Subscription Attempt', { subdomain });
