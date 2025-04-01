@@ -21,28 +21,22 @@ export default function SignUp() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username } },
+        options: {
+          data: { username },
+          emailRedirectTo: `${window.location.origin}/auth/sign-in`, // Changed from redirectTo
+        },
       });
 
       if (error) throw error;
 
-      const user = data.user;
-      if (user) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .insert({ id: user.id, email, username, subscription_tier: 'free' });
-
-        if (dbError) throw dbError;
-
-        toast({
-          title: 'Account created!',
-          description: 'Check your email to confirm your account.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-        router.push('/auth/sign-in');
-      }
+      toast({
+        title: 'Account created!',
+        description: 'Check your email to confirm your account.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      router.push('/auth/sign-in');
     } catch (error) {
       const authError = error as AuthError;
       toast({

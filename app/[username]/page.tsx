@@ -1,11 +1,13 @@
 // app/[username]/page.tsx
-import { supabase } from '../../lib/supabase';
-import { Box, Heading, Text, Button } from '@chakra-ui/react';
+import { createSupabaseServerClient } from '../../lib/supabaseServerClient'; // Updated import
+import { Box, Heading, Text } from '@chakra-ui/react';
 import { redirect } from 'next/navigation';
+import SignOutButton from '../components/SignOutButton';
 
 export default async function Dashboard({ params }: { params: { username: string } }) {
-  const { data: session } = await supabase.auth.getSession();
-  const user = session?.session?.user;
+  const supabase = createSupabaseServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     redirect('/auth/sign-in');
@@ -25,16 +27,7 @@ export default async function Dashboard({ params }: { params: { username: string
     <Box maxW="3xl" mx="auto" mt={10} p={5}>
       <Heading>Welcome, {params.username}!</Heading>
       <Text mt={4}>This is your dashboard. More features coming soon!</Text>
-      <Button
-        mt={4}
-        colorScheme="red"
-        onClick={async () => {
-          await supabase.auth.signOut();
-          redirect('/auth/sign-in');
-        }}
-      >
-        Sign Out
-      </Button>
+      <SignOutButton />
     </Box>
   );
 }

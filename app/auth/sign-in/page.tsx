@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, FormControl, FormLabel, Input, VStack, Text, useToast } from '@chakra-ui/react';
-import { supabase } from '../../../lib/supabase';
+import { createSupabaseBrowserClient } from '../../../lib/supabaseBrowserClient'; // Updated import
 import { AuthError } from '@supabase/supabase-js';
 
 export default function SignIn() {
@@ -13,8 +13,10 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const supabase = createSupabaseBrowserClient();
 
   const handleSignIn = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -27,25 +29,39 @@ export default function SignIn() {
           .select('username')
           .eq('id', user.id)
           .single();
-        if (dbError) throw dbError;
 
-        router.push(`/${userData.username}`);
+        if (dbError || !userData) {
+          throw new Error('User not found in database');
+        }
+
+        await router.push(`/${userData.username}`);
+        router.refresh();
       }
     } catch (error) {
-      const authError = error as AuthError;
-      toast({
-        title: 'Error',
-        description: authError.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      if (error instanceof AuthError) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -54,14 +70,23 @@ export default function SignIn() {
       });
       if (error) throw error;
     } catch (error) {
-      const authError = error as AuthError;
-      toast({
-        title: 'Error',
-        description: authError.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      if (error instanceof AuthError) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     } finally {
       setLoading(false);
     }
