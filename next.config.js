@@ -1,19 +1,9 @@
-// /** @type {import('next').NextConfig} */
-// const nextConfig = {
-//   reactStrictMode: true,
-//   eslint: {
-//     ignoreDuringBuilds: true, // Skips ESLint checks during next build
-//   },
-// };
+// next.config.js
+require('dotenv').config({ path: './.env.local' });
 
-// module.exports = nextConfig;
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true, // Ignores ESLint errors during build
+module.exports = {
+  env: {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   },
 };
-
-module.exports = nextConfig;
