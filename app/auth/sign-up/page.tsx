@@ -1,107 +1,52 @@
 // app/auth/sign-up/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Box, Button, FormControl, FormLabel, Input, VStack, Text, useToast } from '@chakra-ui/react';
-import { supabase } from '../../../lib/supabase';
-import { AuthError } from '@supabase/supabase-js';
+import { SignUp } from '@clerk/nextjs';
+import { Box, Flex, Heading, Text } from '@chakra-ui/react';
 
-export default function SignUp() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const toast = useToast();
-
-  const handleSignUp = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { username },
-          emailRedirectTo: `${window.location.origin}/auth/sign-in`, // Changed from redirectTo
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Account created!',
-        description: 'Check your email to confirm your account.',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      router.push('/auth/sign-in');
-    } catch (error) {
-      const authError = error as AuthError;
-      toast({
-        title: 'Error',
-        description: authError.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) throw error;
-    } catch (error) {
-      const authError = error as AuthError;
-      toast({
-        title: 'Error',
-        description: authError.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function SignUpPage() {
   return (
-    <Box maxW="md" mx="auto" mt={10} p={5} borderWidth={1} borderRadius="md">
-      <VStack spacing={4}>
-        <Text fontSize="2xl">Sign Up for SpawnWrite</Text>
-        <FormControl>
-          <FormLabel>Email</FormLabel>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Password</FormLabel>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Username</FormLabel>
-          <Input value={username} onChange={(e) => setUsername(e.target.value)} />
-        </FormControl>
-        <Button colorScheme="blue" onClick={handleSignUp} isLoading={loading} w="full">
-          Sign Up
-        </Button>
-        <Button colorScheme="gray" onClick={handleGoogleSignUp} isLoading={loading} w="full">
-          Sign Up with Google
-        </Button>
-        <Text>
-          Already have an account?{' '}
-          <Button variant="link" onClick={() => router.push('/auth/sign-in')}>
-            Sign In
-          </Button>
-        </Text>
-      </VStack>
-    </Box>
+    <Flex minH="100vh" bg="#F5F7FA">
+      {/* Left Side - Form */}
+      <Box flex="1" p={10} display="flex" alignItems="center" justifyContent="center">
+        <Box maxW="md" w="full">
+          <Heading mb={6} fontSize="2xl" color="#333">
+            Create an account
+          </Heading>
+          <SignUp
+            signInUrl="/auth/sign-in"
+            afterSignUpUrl="/dashboard"
+            appearance={{
+              elements: {
+                formButtonPrimary: {
+                  backgroundColor: '#1A3C34',
+                  '&:hover': { backgroundColor: '#2A5C54' },
+                },
+                socialButtonsBlockButton: {
+                  backgroundColor: 'white',
+                  border: '1px solid #E2E8F0',
+                  color: '#333',
+                },
+              },
+            }}
+          />
+        </Box>
+      </Box>
+
+      {/* Right Side - Green Section */}
+      <Box flex="1" bg="#1A3C34" p={10} display="flex" alignItems="center" justifyContent="center">
+        <Box color="white">
+          <Heading fontSize="2xl" mb={4}>
+            Create and Share with Ease
+          </Heading>
+          <Text fontSize="md" mb={6}>
+            Welcome to SpawnWrite—a platform to write, publish, and grow your audience effortlessly
+          </Text>
+          <Box bg="white" p={4} borderRadius="md" mb={4}>
+            <Text color="#333">Analytics Placeholder</Text>
+          </Box>
+        </Box>
+      </Box>
+    </Flex>
   );
 }

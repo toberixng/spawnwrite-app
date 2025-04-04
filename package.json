@@ -9,18 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@chakra-ui/react": "^2.8.0",
+    "@chakra-ui/icons": "^2.2.4",
+    "@chakra-ui/react": "^2.8.2",
+    "@clerk/nextjs": "^6.12.12",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.4",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "dotenv": "^16.4.7",
     "framer-motion": "^10.12.16",
-    "next": "14.2.3",
+    "next": "14.2.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "svix": "^1.63.1",
     "typescript": "^5.0.0"
   },
   "devDependencies": {

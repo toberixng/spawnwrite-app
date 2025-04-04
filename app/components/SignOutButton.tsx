@@ -3,19 +3,25 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@chakra-ui/react';
-import { createSupabaseBrowserClient } from '../../lib/supabaseBrowserClient'; // Updated import
+import { useAuth } from '@clerk/nextjs';
 
 export default function SignOutButton() {
   const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
+  const { signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     router.push('/auth/sign-in');
   };
 
   return (
-    <Button colorScheme="red" onClick={handleSignOut}>
+    <Button
+      bg="#1A3C34"
+      color="white"
+      onClick={handleSignOut}
+      mt={4}
+      _hover={{ bg: '#2A5C54' }}
+    >
       Sign Out
     </Button>
   );
