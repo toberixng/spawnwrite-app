@@ -6,7 +6,7 @@ import { Box, Heading, Text } from '@chakra-ui/react';
 import SignOutButton from '../components/SignOutButton';
 
 export default async function Dashboard() {
-  const { userId } = auth();
+  const { userId } = await auth(); // Use await to resolve the Promise
 
   // If the user is not authenticated, redirect to sign-in
   if (!userId) {
