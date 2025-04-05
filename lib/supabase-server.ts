@@ -1,27 +1,10 @@
-// lib/supabase-server.ts
-import { createServerClient } from '@supabase/ssr';
-import { type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+// lib/supabase-server.ts (updated for DB only)
+import { createClient } from '@supabase/supabase-js';
 
-export async function createSupabaseServerClient() {
-  // Await cookies() to get the actual ReadonlyRequestCookies object
-  const cookieStore = await cookies();
-
-  return createServerClient(
+export async function createSupabaseAdminClient() {
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!, // Add this to .env.local from Supabase > Settings > API
+    { auth: { persistSession: false } }
   );
 }

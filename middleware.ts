@@ -1,35 +1,25 @@
 // middleware.ts
-import { createSupabaseServerClient } from './lib/supabase-server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 
-// Export the middleware function explicitly
-export const middleware = async (request: NextRequest) => {
-  const cookieStore = await cookies();
-  const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+const isPublicRoute = createRouteMatcher(['/', '/auth/sign-in', '/auth/sign-up', '/api/clerk-webhook']);
 
-  const requestUrl = new URL(request.url);
-  const isAuthPath = requestUrl.pathname.startsWith('/auth');
-  const isDashboardPath = requestUrl.pathname.startsWith('/dashboard');
+export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth(); // Await the promise to get userId
 
-  if (!session && isDashboardPath) {
-    return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+  const url = new URL(req.url);
+
+  if (!userId && !isPublicRoute(req)) {
+    return NextResponse.redirect(new URL('/auth/sign-in', req.url));
   }
 
-  if (session && isAuthPath) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (userId && (url.pathname === '/auth/sign-in' || url.pathname === '/auth/sign-up')) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  const response = NextResponse.next();
-  cookieStore.getAll().forEach((cookie: { name: string; value: string }) => {
-    response.cookies.set(cookie.name, cookie.value);
-  });
-
-  return response;
-};
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/:path*'],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };

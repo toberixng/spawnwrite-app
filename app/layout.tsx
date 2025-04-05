@@ -1,21 +1,22 @@
 // app/layout.tsx
-"use client"; // Add this at the top
-
+import { ClerkProvider } from '@clerk/nextjs';
 import { ChakraProvider } from '@chakra-ui/react';
 import { ReactNode } from 'react';
-import theme from '../lib/theme';
 
-interface RootLayoutProps {
-  children: ReactNode;
-}
+export const metadata = {
+  title: 'SpawnWrite',
+  description: 'A simple app for capturing moments',
+};
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <ChakraProvider theme={theme}>
-          {children}
-        </ChakraProvider>
+        <ClerkProvider>
+          <ChakraProvider>
+            {children}
+          </ChakraProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
