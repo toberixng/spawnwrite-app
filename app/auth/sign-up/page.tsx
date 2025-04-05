@@ -64,12 +64,14 @@ export default function SignUp() {
     }
 
     const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}`;
+    const redirectTo = `${window.location.origin}/auth/callback?username=${username}`;
+    console.log('Email sign-up redirectTo:', redirectTo); // Debug log
     const { error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: {
         data: { username, first_name: firstName, last_name: lastName },
-        emailRedirectTo: `${window.location.origin}/auth/callback?username=${username}`,
+        emailRedirectTo: redirectTo,
       },
     });
 
@@ -83,11 +85,12 @@ export default function SignUp() {
   const handleGoogleSignUp = async () => {
     setError(null);
     const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}`;
+    const redirectTo = `${window.location.origin}/auth/callback?username=${username}`;
+    console.log('Google sign-up redirectTo:', redirectTo); // Debug log
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?username=${username}`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
+        redirectTo: redirectTo,
       },
     });
 
@@ -96,6 +99,7 @@ export default function SignUp() {
     }
   };
 
+  // Rest of your UI code remains unchanged
   return (
     <Flex minH="100vh" direction={{ base: 'column', md: 'row' }}>
       <Box

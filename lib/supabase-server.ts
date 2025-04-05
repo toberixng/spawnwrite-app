@@ -1,10 +1,10 @@
 // lib/supabase-server.ts
-import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
+import { type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-// Server-side Supabase client (for SSR and API routes)
 export async function createSupabaseServerClient() {
+  // Await cookies() to get the actual ReadonlyRequestCookies object
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -12,35 +12,16 @@ export async function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll: () => {
-          return cookieStore.getAll().map((cookie) => ({
-            name: cookie.name,
-            value: cookie.value,
-          }));
+        get(name: string) {
+          return cookieStore.get(name)?.value;
         },
-        setAll: (cookieArray) => {
-          cookieArray.forEach((cookie) => {
-            cookieStore.set(cookie.name, cookie.value, {
-              httpOnly: cookie.options?.httpOnly,
-              secure: cookie.options?.secure,
-              path: cookie.options?.path || '/',
-              expires: cookie.options?.expires
-                ? new Date(cookie.options.expires)
-                : undefined,
-              sameSite: cookie.options?.sameSite,
-            });
-          });
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set({ name, value: '', ...options });
         },
       },
     }
   );
 }
-
-// Server-side client with service role (for admin tasks)
-export const createSupabaseAdminClient = () => {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-};

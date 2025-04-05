@@ -2,8 +2,11 @@
 import { createSupabaseServerClient } from './lib/supabase-server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 
-export async function middleware(request: NextRequest) {
+// Export the middleware function explicitly
+export const middleware = async (request: NextRequest) => {
+  const cookieStore = await cookies();
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -19,8 +22,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return NextResponse.next();
-}
+  const response = NextResponse.next();
+  cookieStore.getAll().forEach((cookie: { name: string; value: string }) => {
+    response.cookies.set(cookie.name, cookie.value);
+  });
+
+  return response;
+};
 
 export const config = {
   matcher: ['/dashboard/:path*', '/auth/:path*'],

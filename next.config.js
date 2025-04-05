@@ -2,8 +2,17 @@
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-      appDir: true, // Ensures App Router support (already enabled in 15.2.4)
+      appDir: true,
+    },
+    async redirects() {
+      return [
+        {
+          source: '/auth/callback',
+          destination: '/auth/sign-in?error=Callback%20failed',
+          permanent: false,
+          has: [{ type: 'query', key: 'error' }],
+        },
+      ];
     },
   };
-  
   module.exports = nextConfig;

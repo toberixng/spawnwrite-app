@@ -1,24 +1,33 @@
 // app/auth/callback/page.tsx
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function AuthCallback({
-  searchParams,
+  searchParams: searchParamsPromise, // Rename to indicate it’s a Promise
 }: {
-  searchParams: { username?: string; error?: string; code?: string };
+  searchParams: Promise<{ username?: string; error?: string; code?: string }>; // Type as Promise
 }) {
+  const cookieStore = await cookies();
   const supabase = await createSupabaseServerClient();
+  const searchParams = await searchParamsPromise; // Await the Promise
 
-  // Handle OAuth or email confirmation code
   if (searchParams.code) {
-    await supabase.auth.exchangeCodeForSession(searchParams.code);
+    const { error } = await supabase.auth.exchangeCodeForSession(searchParams.code);
+    if (error) {
+      console.error('Exchange code error:', error.message);
+      return redirect('/auth/sign-in?error=Failed to process authentication code');
+    }
+  } else {
+    console.error('No code provided in callback');
+    return redirect('/auth/sign-in?error=No authentication code provided');
   }
 
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
   if (sessionError || !sessionData.session) {
-    console.error('Session error:', sessionError);
-    return redirect('/auth/sign-in?error=Authentication failed - please try again');
+    console.error('Session error:', sessionError?.message || 'No session found');
+    return redirect('/auth/sign-in?error=Session not established - please try again');
   }
 
   const userId = sessionData.session.user.id;
@@ -29,7 +38,7 @@ export default async function AuthCallback({
     .single();
 
   if (fetchError && fetchError.code !== 'PGRST116') {
-    console.error('Fetch error:', fetchError);
+    console.error('Fetch error:', fetchError.message);
     return redirect('/auth/sign-in?error=Database fetch error');
   }
 
@@ -49,7 +58,7 @@ export default async function AuthCallback({
     });
 
     if (insertError) {
-      console.error('Insert error:', insertError);
+      console.error('Insert error:', insertError.message);
       return redirect('/auth/sign-in?error=Database error saving new user');
     }
   }

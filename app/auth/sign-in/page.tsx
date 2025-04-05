@@ -44,10 +44,12 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    console.log('Google sign-in redirectTo:', redirectTo); // Debug log
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectTo,
       },
     });
 
@@ -74,6 +76,7 @@ export default function SignIn() {
     }
   };
 
+  // Rest of your UI code remains unchanged
   return (
     <Flex minH="100vh" direction={{ base: 'column', md: 'row' }}>
       <Box
