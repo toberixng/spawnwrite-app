@@ -5,13 +5,20 @@ import { redirect } from 'next/navigation';
 export default async function AuthCallback({
   searchParams,
 }: {
-  searchParams: { username?: string };
+  searchParams: { username?: string; error?: string; code?: string };
 }) {
   const supabase = await createSupabaseServerClient();
+
+  // Handle OAuth or email confirmation code
+  if (searchParams.code) {
+    await supabase.auth.exchangeCodeForSession(searchParams.code);
+  }
+
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
   if (sessionError || !sessionData.session) {
-    return redirect('/auth/sign-in?error=Session not found');
+    console.error('Session error:', sessionError);
+    return redirect('/auth/sign-in?error=Authentication failed - please try again');
   }
 
   const userId = sessionData.session.user.id;
@@ -21,7 +28,7 @@ export default async function AuthCallback({
     .eq('id', userId)
     .single();
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows
+  if (fetchError && fetchError.code !== 'PGRST116') {
     console.error('Fetch error:', fetchError);
     return redirect('/auth/sign-in?error=Database fetch error');
   }

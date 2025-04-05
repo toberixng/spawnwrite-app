@@ -64,18 +64,18 @@ export default function SignUp() {
     }
 
     const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}`;
-    const { data, error } = await supabaseClient.auth.signUp({
+    const { error } = await supabaseClient.auth.signUp({
       email,
       password,
       options: {
         data: { username, first_name: firstName, last_name: lastName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?username=${username}`,
       },
     });
 
     if (error) {
       setError(error.message);
-    } else if (data.user) {
+    } else {
       setSuccess(true);
     }
   };
@@ -86,7 +86,8 @@ export default function SignUp() {
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?username=${username}`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     });
 
@@ -148,7 +149,7 @@ export default function SignUp() {
               onChange={(e) => setFirstName(e.target.value)}
               bg="white"
               color="gray.800"
-              _placeholder={{ color: 'gray.500' }} // Visible placeholder
+              _placeholder={{ color: 'gray.500' }}
               borderColor="gray.300"
               _focus={{ borderColor: 'secondary' }}
             />

@@ -1,35 +1,27 @@
 // middleware.ts
-import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from './lib/supabase-server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function middleware(request: Request) {
+export async function middleware(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  const url = new URL(request.url);
-  const pathname = url.pathname;
+  const requestUrl = new URL(request.url);
+  const isAuthPath = requestUrl.pathname.startsWith('/auth');
+  const isDashboardPath = requestUrl.pathname.startsWith('/dashboard');
 
-  // Protect dashboard routes
-  if (pathname.startsWith('/dashboard')) {
-    if (error || !data.user) {
-      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
-    }
+  if (!session && isDashboardPath) {
+    return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+  }
 
-    // Fetch username for redirect (temporary until Phase 2)
-    const { data: userData } = await supabase
-      .from('users')
-      .select('username')
-      .eq('id', data.user.id)
-      .single();
-
-    if (userData?.username) {
-      return NextResponse.next(); // Proceed to /dashboard for now
-    }
+  if (session && isAuthPath) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'], // Protect all /dashboard routes
+  matcher: ['/dashboard/:path*', '/auth/:path*'],
 };
