@@ -12,20 +12,24 @@
     "@chakra-ui/react": "^3.15.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@supabase/ssr": "^0.5.1",
-    "@supabase/supabase-js": "^2.45.4",
+    "@google-cloud/text-to-speech": "^6.0.1",
+    "@paystack/paystack-sdk": "^1.0.1",
+    "@sentry/nextjs": "^9.11.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
     "framer-motion": "^12.6.3",
-    "next": "14.2.25",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-quill": "^2.0.0"
+    "next": "15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.25",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.4",
     "typescript": "^5"
   }
 }
