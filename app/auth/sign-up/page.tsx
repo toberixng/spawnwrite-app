@@ -1,7 +1,7 @@
 // app/auth/sign-up/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSignUp } from '@clerk/nextjs';
 import {
@@ -28,13 +28,19 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
-  const [code, setCode] = useState(''); // For verification code
-  const [isVerifying, setIsVerifying] = useState(false); // Toggle verification step
-  const [isLoading, setIsLoading] = useState(false); // Prevent double-click
+  const [code, setCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
   const { signUp, isLoaded } = useSignUp();
+
+  const [checkboxKey, setCheckboxKey] = useState(0);
+
+  useEffect(() => {
+    console.log('agreeTerms state:', agreeTerms);
+  }, [agreeTerms]);
 
   if (!isLoaded) return <Text>Loading...</Text>;
 
@@ -46,7 +52,7 @@ export default function SignUp() {
   };
 
   const handleEmailSignUp = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     setSuccess(false);
@@ -73,28 +79,26 @@ export default function SignUp() {
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setSuccess(true);
-      setIsVerifying(true); // Show code input
+      setIsVerifying(true);
     } catch (err: any) {
       console.error('Sign-up error:', err);
-      setError(err.errors?.[0]?.message || 'Sign-up failed: Unknown error.');
+      setError(err.errors?.[0]?.message || 'Sign-up failed.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await signUp.attemptEmailAddressVerification({
-        code,
-      });
+      const result = await signUp.attemptEmailAddressVerification({ code });
       if (result.status === 'complete') {
         router.push('/dashboard');
       } else {
-        setError('Verification incomplete. Please try again.');
+        setError('Verification incomplete.');
       }
     } catch (err: any) {
       console.error('Verification error:', err);
@@ -105,7 +109,7 @@ export default function SignUp() {
   };
 
   const handleGoogleSignUp = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -201,14 +205,16 @@ export default function SignUp() {
                   </FormControl>
                 </Box>
                 <Checkbox
+                  key={checkboxKey}
                   isChecked={agreeTerms}
                   onChange={(e) => {
                     console.log('Checkbox toggled to:', e.target.checked);
                     setAgreeTerms(e.target.checked);
+                    setCheckboxKey(prev => prev + 1);
                   }}
                   colorScheme="primary"
                   size="md"
-                  iconColor="white"
+                  iconColor="#121C27" // Darker color for visibility
                 >
                   <Text color="black">
                     I agree to the{' '}

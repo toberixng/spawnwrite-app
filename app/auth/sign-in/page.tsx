@@ -1,9 +1,8 @@
-// app/auth/sign-in/page.tsx
 "use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSignIn } from '@clerk/nextjs';
+import { useSignIn, useClerk } from '@clerk/nextjs';
 import {
   Box,
   Heading,
@@ -24,17 +23,19 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Prevent double-click
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { signIn, isLoaded } = useSignIn();
+  const { signOut } = useClerk();
 
   if (!isLoaded) return <Text>Loading...</Text>;
 
   const handleEmailSignIn = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     try {
+      await signOut();
       const result = await signIn.create({
         identifier: email,
         password,
@@ -53,10 +54,11 @@ export default function SignIn() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     try {
+      await signOut();
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/auth/callback',
@@ -70,7 +72,7 @@ export default function SignIn() {
   };
 
   const handlePasswordReset = async () => {
-    if (isLoading) return; // Prevent double-click
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     setResetSent(false);
